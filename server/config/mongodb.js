@@ -1,16 +1,18 @@
 import mongoose from "mongoose";
 
-const connectDB = async () => {
-  mongoose.connection.on("connected", () => {
-    console.log("MongoDB Atlas connected successfully");
-  });
+let isConnected = false;
 
-  try {
-    await mongoose.connect(`${process.env.MONGODB_URI}`);
-  } catch (error) {
-    console.error("MongoDB connection error:", error.message);
-    process.exit(1); 
-  }
+const connectDB = async () => {
+    if (isConnected) return;
+
+    try {
+        const db = await mongoose.connect(process.env.MONGODB_URI);
+        isConnected = db.connections[0].readyState === 1;
+        console.log("MongoDB connected");
+    } catch (error) {
+        console.error("MongoDB connection error:", error.message);
+        process.exit(1);
+    }
 };
 
 export default connectDB;
