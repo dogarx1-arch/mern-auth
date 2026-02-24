@@ -35,8 +35,13 @@ app.use(cookieParser());
 
 // 2. Connect to DB on every request (required for Vercel serverless)
 app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error("DB connection failed:", error.message);
+        return res.status(500).json({ success: false, message: "Database connection failed" });
+    }
 });
 
 // Routes
