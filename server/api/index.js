@@ -26,21 +26,24 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-// 1. CORS must be first — handles both normal and preflight requests
+// CORS first — before everything else
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
 
-// 2. Connect to DB on every request (required for Vercel serverless)
+// DB connection middleware
 app.use(async (req, res, next) => {
     try {
         await connectDB();
         next();
     } catch (error) {
         console.error("DB connection failed:", error.message);
-        return res.status(500).json({ success: false, message: "Database connection failed" });
+        return res.status(500).json({
+            success: false,
+            message: "Database connection failed: " + error.message
+        });
     }
 });
 
@@ -48,6 +51,15 @@ app.use(async (req, res, next) => {
 app.get('/', (req, res) => res.send('API Working'));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+
+// Global error handler — keeps CORS headers even on crashes
+app.use((err, req, res, next) => {
+    console.error("Unhandled error:", err.message);
+    res.status(500).json({
+        success: false,
+        message: err.message || "Internal server error"
+    });
+});
 
 if (process.env.NODE_ENV !== 'production') {
     const port = process.env.PORT || 4000;
