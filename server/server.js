@@ -7,20 +7,26 @@ import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
 
 const app = express();
-const port = process.env.PORT || 4000;
 
 // Connect to MongoDB Atlas
 connectDB();
 
-// Change this to your frontend URL later when you deploy
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173'];
 
 app.use(express.json());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(cookieParser());
 
+// Routes
 app.get('/', (req, res) => res.send('API Working'));
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+// FIX FOR VERCEL: Only start the server if we are NOT on Vercel
+if (process.env.NODE_ENV !== 'production') {
+    const port = process.env.PORT || 4000;
+    app.listen(port, () => console.log(`Server is running on port ${port}`));
+}
+
+// CRITICAL FOR VERCEL: You must export the app
+export default app;
